@@ -379,6 +379,10 @@ next:
 		rx_baud_mult = 64;       /* hardware *16, libftdi *4 */
 	}
 
+	if (usb_product == 0x6014) {
+		rx_baud_mult = 20;
+	}
+
 	rec_buffer_init();
 
 	/* Allocate a pipe for lircd to read from */
@@ -694,6 +698,7 @@ static int hwftdix_open(const char* device)
 	}
 
 	log_debug("opened FTDI device '%s' OK", device);
+	usb_product = config.product;
 	is_open = 1;
 	return 0;
 fail_opened:
@@ -844,10 +849,16 @@ static int hwftdix_send(struct ir_remote* remote, struct ir_ncode* code)
 	/* A sample rate of carrier*2 means we will get the pattern 1010101010
 	 * when the blaster is on and 0000000000 when it is off. */
 	uint32_t f_sample = f_carrier * 2;
-	uint32_t tx_baud = f_carrier * 2 / 64;
+	uint32_t tx_baud;
 
 	const lirc_t* pulseptr;
 	int n_pulses;
+
+	if (usb_product == 0x6014) {
+		tx_baud = f_carrier * 2 / 20;
+	} else {
+		tx_baud = f_carrier * 2 / 64;
+	}
 
 	log_debug("hwftdix_send() carrier=%dHz f_sample=%dHz tx_baud=%d",
 		  f_carrier, f_sample, tx_baud);
