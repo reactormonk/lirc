@@ -352,7 +352,7 @@ static void* zotac_repeat(void* arg)
 		if (pressed)
 			sel = curl_poll(&pfd, 1, delay_ms);
 		else
-			sel = curl_poll(&pfd, 1, 0);
+			sel = curl_poll(&pfd, 1, -1);
 		switch (sel) {
 		case 1:
 			// Data ready in device's file
