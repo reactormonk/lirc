@@ -51,6 +51,10 @@
 #define LONG(x) ((x) / BITS_PER_LONG)
 #define test_bit(bit, array)    ((array[LONG(bit)] >> OFF(bit)) & 1)
 
+#ifndef input_event_sec
+#define input_event_sec time.tv_sec
+#define input_event_usec time.tv_usec
+#endif
 
 static const logchannel_t logchannel = LOG_DRIVER;
 
@@ -458,7 +462,7 @@ char* devinput_rec(struct ir_remote* remotes)
 		return 0;
 	}
 
-	log_trace("time %ld.%06ld  type %d  code %d  value %d", event.time.tv_sec, event.time.tv_usec, event.type,
+	log_trace("time %ld.%06ld  type %d  code %d  value %d", event.input_event_sec, event.input_event_usec, event.type,
 		  event.code, event.value);
 
 	value = (unsigned)event.value;
