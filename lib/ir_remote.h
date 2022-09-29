@@ -518,11 +518,9 @@ char* decode_all(struct ir_remote* remotes);
  * @param remote Currently active remote, used as database for timing,
  *     and as keeper of an internal state.
  * @param code IR code to be transmitted
- * @param delay If true (normal case), generate a delay corresponding
- *     to the time it takes to send the code. If not (test case), don't.
  * @return Non-zero if success.
  */
-int send_ir_ncode(struct ir_remote* remote, struct ir_ncode* code, int delay);
+int send_ir_ncode(struct ir_remote* remote, struct ir_ncode* code);
 
 #ifdef __cplusplus
 }

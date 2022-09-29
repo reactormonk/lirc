@@ -123,18 +123,6 @@ void ir_remote_init(int use_dyncodes)
 }
 
 
-static lirc_t time_left(struct timeval* current,
-			struct timeval* last,
-			lirc_t		gap)
-{
-	unsigned long secs, diff;
-
-	secs = current->tv_sec - last->tv_sec;
-	diff = 1000000 * secs + current->tv_usec - last->tv_usec;
-	return (lirc_t)(diff < gap ? gap - diff : 0);
-}
-
-
 static int match_ir_code(struct ir_remote* remote, ir_code a, ir_code b)
 {
 	return (remote->ignore_mask | a) == (remote->ignore_mask | b)
@@ -816,30 +804,11 @@ char* decode_all(struct ir_remote* remotes)
 }
 
 
-int send_ir_ncode(struct ir_remote* remote, struct ir_ncode* code, int delay)
+int send_ir_ncode(struct ir_remote* remote, struct ir_ncode* code)
 {
 	int ret;
 
-	if (delay) {
-		/* insert pause when needed: */
-		if (remote->last_code != NULL) {
-			struct timeval current;
-			unsigned long usecs;
-
-			gettimeofday(&current, NULL);
-			usecs = time_left(&current,
-					  &remote->last_send,
-					  remote->min_remaining_gap * 2);
-			if (usecs > 0) {
-				if (repeat_remote == NULL || remote !=
-				    repeat_remote
-				    || remote->last_code != code)
-					usleep(usecs);
-			}
-		}
-	}
 	ret = curr_driver->send_func(remote, code);
-
 	if (ret) {
 		gettimeofday(&remote->last_send, NULL);
 		remote->last_code = code;

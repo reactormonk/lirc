@@ -194,10 +194,10 @@ static void send_code(struct ir_remote* remote, struct ir_ncode* code)
 	remote->min_repeat = 0;
 	if (strcmp(code->name, last_code) == 0)
 		repeat_remote = remote;
-	send_ir_ncode(remote, code, 0);
+	send_ir_ncode(remote, code);
 	repeat_remote = remote;
 	for (i = 1; i < opt_count; i += 1)
-		send_ir_ncode(remote, code, 0);
+		send_ir_ncode(remote, code);
 	repeat_remote = NULL;
 	strncpy(last_code, code->name, sizeof(last_code));
 }
