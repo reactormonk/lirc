@@ -99,19 +99,6 @@ static int pipe_tx2main[2] = { -1, -1 };
 
 int old_timings = 0;          /* Use old timings, see #275. */
 
-#if 0
-static lirc_t time_left(struct timeval* current, struct timeval* last, lirc_t gap)
-{
-	uint32_t secs, diff;
-
-	secs = current->tv_sec - last->tv_sec;
-
-	diff = 1000000 * secs + current->tv_usec - last->tv_usec;
-
-	return (lirc_t)(diff < gap ? gap - diff : 0);
-}
-#endif
-
 static int modulate_pulses(unsigned char* buf, size_t size,
 	const int* pulseptr, int n_pulses, uint32_t f_sample, uint32_t f_carrier,
 	unsigned int duty_cycle);
