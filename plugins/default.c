@@ -132,6 +132,7 @@ static int visit_rc(const char* rc_dir, const char* device)
 	char buff[256];
 	int fd;
 	int r;
+	const char *protocol = "none\n";
 
 	snprintf(path, sizeof(path), "/sys/class/rc/%s", rc_dir);
 	if (access(path, F_OK) != 0) {
@@ -158,21 +159,18 @@ static int visit_rc(const char* rc_dir, const char* device)
 	}
 	// ensure null terminator
 	buff[r] = 0;
-	if (strstr(buff, "[lirc]") != NULL) {
-		log_info("[lirc] protocol is enabled");
-		return 0;
-	}
-	if (strstr(buff, "lirc") == NULL) {
-		log_info("lirc protocol not present");
-		return 0;
+	// In pre-4.16 kernels, this enables the lirc decoder, which makes
+	// enables the lirc chardev. Post 4.16 it only disables the other
+	// protocols, just like "none".
+	if (strstr(buff, "lirc") != NULL) {
+		protocol = "lirc\n";
 	}
 	fd = open(path, O_WRONLY);
 	if (fd < 0) {
-		log_debug(
-			  "Cannot open protocol file for write: %s", path);
+		log_debug("Cannot open protocol file for write: %s", path);
 		return -1;
 	}
-	chk_write(fd, "+lirc\n", 6);
+	chk_write(fd, protocol, 6);
 	log_notice("'lirc' written to protocols file %s", path);
 	close(fd);
 	return 0;
