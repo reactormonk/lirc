@@ -211,8 +211,6 @@ AH_TEMPLATE([HAVE_SYSTEMD], [defined if systemd API is available])
 
 AH_TEMPLATE([GETGROUPS_T], [type of argument 3 in getgrouplist()])
 
-AH_TEMPLATE([HAVE_KERNEL_LIRC_H], [define if kernel-headers contains lirc.h])
-
 AH_TEMPLATE([HAVE_MACH_MACH_TIME_H],
 	    [define if mach/mach_time.h is available (MacOS)])
 
