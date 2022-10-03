@@ -2,7 +2,8 @@
 ACLOCAL_AMFLAGS         = -I m4
 
 AM_CPPFLAGS             = -I$(top_builddir) -I$(top_builddir)/lib  \
-			  -I$(top_srcdir)/lib -I$(top_builddir)/include
+			  -I$(top_srcdir)/lib -I$(top_builddir)/include \
+			  -I$(top_srcdir)/include
 AM_CPPFLAGS             += -std=c++11 -Wp,-D_FORTIFY_SOURCE=2 -Wall
 AM_LDFLAGS              = -lpthread $(SYSTEMD_LIBS)
 
