@@ -1,6 +1,6 @@
-CXXFLAGS += -I. -I../lib  -g -std=c++11 -DHAVE_KERNEL_LIRC_H=1
+CXXFLAGS += -I. -I../lib -g -I../include -std=c++11
 
-CFLAGS   += -I. -I../lib -g
+CFLAGS   += -I. -I../lib -g -I../include
 
 LDLIBS   += $(shell pkg-config --libs cppunit)
 LDLIBS   += -lstdc++

@@ -101,7 +101,7 @@ class ClientTest : public CppUnit::TestFixture
             unlink("var/file-driver.out");
 
             int status;
-            char newpath[128];
+            char newpath[8192];
 
             snprintf(newpath, sizeof(newpath), "../daemons:%s",  oldpath);
             setenv("PATH", newpath, 1);
