@@ -49,12 +49,12 @@ LT_INIT([disable-static])
 
 AM_PATH_PYTHON([3.1],,)
 PKG_CHECK_MODULES([PYTHON],[python-${PYTHON_VERSION}m],,[true])
-test -z "$PYTHON_LIBS" && \
+test -z "$PYTHON_CFLAGS" && \
     PKG_CHECK_MODULES([PYTHON], [python-$PYTHON_VERSION],,[true])
-test -n "$PYTHON_LIBS" || \
+test -n "$PYTHON_CFLAGS" || \
     AC_MSG_WARN([No python package found (missing devel package?)])
 python_version_nodots=$(echo $PYTHON_VERSION | tr -d '.')
-AM_CONDITIONAL(HAVE_PYTHON35, [test -n "$PYTHON_LIBS" && \
+AM_CONDITIONAL(HAVE_PYTHON35, [test -n "$PYTHON_CFLAGS" && \
 			       test $python_version_nodots -ge 35])
 CFLAGS="$CFLAGS $PYTHON_CFLAGS"
 
