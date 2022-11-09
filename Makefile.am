@@ -127,7 +127,7 @@ endif
 
 pylint: .phony
 	$(MAKE) -C tools pylint
-	-PYTHONPATH=$(PYTHONPATH) $(PYLINT) --rcfile=pylint.conf \
+	-PYTHONPATH=$(LIRCPYTHONPATH) $(PYLINT) --rcfile=pylint.conf \
 	--msg-template='$(pylint_template)' $(py_PYTHON)
 
 pep8: $(py_PYTHON)

@@ -142,7 +142,7 @@ force-pylint: .phony
 
 pylint: .pylint-stamp
 .pylint-stamp: $(py_sources)
-	-PYTHONPATH=$(PYTHONPATH) $(PYLINT) --rcfile=../pylint.conf \
+	-PYTHONPATH=$(LIRCPYTHONPATH) $(PYLINT) --rcfile=../pylint.conf \
 	--msg-template='$(pylint_template)' $? && touch $@
 
 .phony:
