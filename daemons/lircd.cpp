@@ -217,6 +217,7 @@ static struct ir_remote* free_remotes = NULL;
 static int repeat_fd = -1;
 static char* repeat_message = NULL;
 static uint32_t repeat_max = REPEAT_MAX_DEFAULT;
+static timeval repeat_time = { };
 
 static const char* configfile = NULL;
 static FILE* pidf;
@@ -1187,7 +1188,8 @@ static void schedule_repeat_timer (struct timespec* last)
 	unsigned long secs;
 	lirc_t usecs, gap, diff;
 	struct timespec current;
-	struct itimerval repeat_timer;
+	struct timeval last_tv, gap_tv;
+
 	gap = send_buffer_sum() + repeat_remote->min_remaining_gap;
 	clock_gettime (CLOCK_MONOTONIC, &current);
 	secs = current.tv_sec - last->tv_sec;
@@ -1195,13 +1197,16 @@ static void schedule_repeat_timer (struct timespec* last)
 	usecs = (diff < gap ? gap - diff : 0);
 	if (usecs < 10)
 		usecs = 10;
-	log_trace("alarm in %lu usecs", (unsigned long)usecs);
-	repeat_timer.it_value.tv_sec = 0;
-	repeat_timer.it_value.tv_usec = usecs;
-	repeat_timer.it_interval.tv_sec = 0;
-	repeat_timer.it_interval.tv_usec = 0;
+	/* log_trace("alarm in %lu usecs", (unsigned long)usecs); */
+	gap_tv.tv_sec = 0;
+	gap_tv.tv_usec = gap;
+	last_tv.tv_sec = last->tv_sec;
+	last_tv.tv_usec = last->tv_nsec / 1000;
+	log_trace("repeat IR: %d usec, last: %ld.%06ld + %d usec",
+		  gap, last_tv.tv_sec, last_tv.tv_usec, diff);
 
-	setitimer(ITIMER_REAL, &repeat_timer, NULL);
+	timeradd(&last_tv, &gap_tv, &repeat_time);
+	alrm = 1;
 }
 
 void dosigalrm(int sig)
@@ -1652,7 +1657,6 @@ static int send_stop(int fd, char* message, char* arguments)
 {
 	struct ir_remote* remote;
 	struct ir_ncode* code;
-	struct itimerval repeat_timer;
 	int err;
 
 	if (parse_rc(fd, message, arguments, &remote, &code, 0, 0, &err) == 0)
@@ -1680,12 +1684,7 @@ static int send_stop(int fd, char* message, char* arguments)
 				repeat_remote->min_repeat - done;
 			return send_success(fd, message);
 		}
-		repeat_timer.it_value.tv_sec = 0;
-		repeat_timer.it_value.tv_usec = 0;
-		repeat_timer.it_interval.tv_sec = 0;
-		repeat_timer.it_interval.tv_usec = 0;
-
-		setitimer(ITIMER_REAL, &repeat_timer, NULL);
+		timerclear(&repeat_time);
 
 		repeat_remote->toggle_mask_state = 0;
 		repeat_remote = NULL;
@@ -1913,31 +1912,18 @@ void free_old_remotes(void)
 				code = get_code_by_name(found,
 							repeat_code->name);
 				if (code != NULL) {
-					struct itimerval repeat_timer;
-
-					repeat_timer.it_value.tv_sec = 0;
-					repeat_timer.it_value.tv_usec = 0;
-					repeat_timer.it_interval.tv_sec = 0;
-					repeat_timer.it_interval.tv_usec = 0;
-
 					found->last_code = code;
-					found->last_send =
-						repeat_remote->last_send;
-					found->toggle_bit_mask_state =
-						repeat_remote->toggle_bit_mask_state;
-					found->min_remaining_gap =
-						repeat_remote->min_remaining_gap;
-					found->max_remaining_gap =
-						repeat_remote->max_remaining_gap;
+					found->last_send = repeat_remote->last_send;
+					found->toggle_bit_mask_state = repeat_remote->toggle_bit_mask_state;
+					found->min_remaining_gap = repeat_remote->min_remaining_gap;
+					found->max_remaining_gap = repeat_remote->max_remaining_gap;
 
-					setitimer(ITIMER_REAL,
-						  &repeat_timer,
-						  &repeat_timer);
+					timerclear(&repeat_time);
 					/* "atomic" (shouldn't be necessary any more) */
 					repeat_remote = found;
 					repeat_code = code;
 					/* end "atomic" */
-					setitimer(ITIMER_REAL, &repeat_timer, NULL);
+					alrm = 0;
 					found = NULL;
 				}
 			} else {
@@ -1974,6 +1960,7 @@ static int mywaitfordata(uint32_t maxusec)
 	int i;
 	int ret, reconnect;
 	struct timeval tv, start, now, timeout, release_time;
+	struct timespec now_ts;
 	loglevel_t oldlevel;
 
 	while (1) {
@@ -1986,9 +1973,15 @@ static int mywaitfordata(uint32_t maxusec)
 				dosighup(SIGHUP);
 				hup = 0;
 			}
-			if (alrm) {
-				dosigalrm(SIGALRM);
-				alrm = 0;
+			if (timerisset(&repeat_time)) {
+				clock_gettime(CLOCK_MONOTONIC, &now_ts);
+				now.tv_sec = now_ts.tv_sec;
+				now.tv_usec = now_ts.tv_nsec / 1000;
+				if (timercmp(&now, &repeat_time, >)) {
+					timerclear(&repeat_time);
+					alrm = 0;
+					dosigalrm(SIGALRM);
+				}
 			}
 			memset(&poll_fds, 0, sizeof(poll_fds));
 			for (i = 0; i < (int)POLLFDS_SIZE; i += 1)
@@ -2049,11 +2042,15 @@ static int mywaitfordata(uint32_t maxusec)
 				}
 				reconnect = 1;
 			}
+			log_trace2("reconnect: %d, tv: %ld.%06ld", reconnect, tv.tv_sec, tv.tv_usec);
 			gettimeofday(&start, NULL);
 			if (maxusec > 0) {
-				tv.tv_sec = maxusec / 1000000;
-				tv.tv_usec = maxusec % 1000000;
+				/* round up to next msec for poll/select */
+				tv.tv_sec = (maxusec + 999) / 1000000;
+				tv.tv_usec = (maxusec + 999) / 1000 % 1000 *
+					     1000;
 			}
+			log_trace2("maxusec: %u, tv: %ld.%06ld", maxusec, tv.tv_sec, tv.tv_usec);
 			if (curr_driver->fd == -1 && use_hw()) {
 				/* try to reconnect */
 				timerclear(&timeout);
@@ -2062,6 +2059,8 @@ static int mywaitfordata(uint32_t maxusec)
 				if (timercmp(&tv, &timeout, >)
 				    || (!reconnect && !timerisset(&tv)))
 					tv = timeout;
+				log_trace2("timeout: %ld.%06ld, tv: %ld.%06ld",
+					   timeout.tv_sec, timeout.tv_usec, tv.tv_sec, tv.tv_usec);
 			}
 			get_release_time(&release_time);
 			if (timerisset(&release_time)) {
@@ -2077,17 +2076,44 @@ static int mywaitfordata(uint32_t maxusec)
 					    || timercmp(&tv, &gap, >))
 						tv = gap;
 				}
+				log_trace2("release_time: %ld.%06ld, now: %ld.%06ld, tv: %ld.%06ld",
+					   release_time.tv_sec, release_time.tv_usec, now.tv_sec, now.tv_usec, tv.tv_sec, tv.tv_usec);
 			}
-			if (timerisset(&tv) || reconnect) {
-				ret = curl_poll((
-					struct pollfd *) &poll_fds.byindex,
-					POLLFDS_SIZE,
-					tv.tv_sec * 1000 + tv.tv_usec / 1000);
+			if (timerisset(&repeat_time)) {
+				clock_gettime(CLOCK_MONOTONIC, &now_ts);
+				now.tv_sec = now_ts.tv_sec;
+				now.tv_usec = now_ts.tv_nsec / 1000;
+				if (timercmp(&now, &repeat_time, >)) {
+					timerclear(&tv);
+				} else {
+					struct timeval gap;
+
+					timersub(&repeat_time, &now, &gap);
+					if (!(timerisset(&tv) || reconnect ||
+					      timerisset(&release_time))
+					    || timercmp(&tv, &gap, >))
+						tv = gap;
+				}
+				log_trace2("repeat_time: %ld.%06ld, now: %ld.%06ld, tv: %ld.%06ld",
+					   repeat_time.tv_sec, repeat_time.tv_usec, now.tv_sec, now.tv_usec, tv.tv_sec, tv.tv_usec);
+			}
+
+
+			if (timerisset(&tv) || reconnect ||
+			    timerisset(&repeat_time)) {
+				ret = curl_poll((struct pollfd *) &poll_fds.byindex,
+					         POLLFDS_SIZE,
+					         tv.tv_sec * 1000 + tv.tv_usec / 1000);
+				log_trace2("poll(%p, %d, %ld) = %d",
+					&poll_fds.byindex, POLLFDS_SIZE,
+					tv.tv_sec*1000 + tv.tv_usec/1000, ret);
 			} else {
-				ret = curl_poll((
-					struct pollfd*)&poll_fds.byindex,
-					POLLFDS_SIZE,
-					-1);
+				ret = curl_poll((struct pollfd*)&poll_fds.byindex,
+					         POLLFDS_SIZE,
+						 -1);
+				log_trace2("poll(%p, %d, %ld) = %d",
+					&poll_fds.byindex, POLLFDS_SIZE,
+					-1l, ret);
 			}
 			if (ret == -1 && errno != EINTR) {
 				log_perror_err("curl_poll()() failed");
@@ -2098,8 +2124,6 @@ static int mywaitfordata(uint32_t maxusec)
 			if (free_remotes != NULL)
 				free_old_remotes();
 			if (maxusec > 0) {
-				if (ret == 0)
-					return 0;
 				if (time_elapsed(&start, &now) >= maxusec)
 					return 0;
 				maxusec -= time_elapsed(&start, &now);
