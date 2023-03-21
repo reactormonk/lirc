@@ -197,7 +197,7 @@ static struct {
 	.latest_button			= MPLAY_CODE_ERROR,
 	.fd				= -1,
 	.pipefd				= { -1,	     -1	  },
-	.tid				= -1
+	.tid				= 0
 };
 
 /**
@@ -782,13 +782,13 @@ int mplay2_init(void)
 int mplayfamily_deinit(void)
 {
 	log_trace("Entering mplayfamily_deinit()");
-	if (mplayfamily_local_data.tid != -1) {
+	if (mplayfamily_local_data.tid) {
 		if (pthread_cancel(mplayfamily_local_data.tid) < 0) {
 			log_perror_err("mplay could not cancel listener");
 			return 0;
 		}
 		pthread_join(mplayfamily_local_data.tid, NULL);
-		mplayfamily_local_data.tid = -1;
+		mplayfamily_local_data.tid = 0;
 	}
 	if (mplayfamily_local_data.pipefd[0] != -1) {
 		close(mplayfamily_local_data.pipefd[0]);
