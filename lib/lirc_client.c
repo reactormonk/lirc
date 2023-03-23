@@ -2047,6 +2047,7 @@ do_connect(int domain, struct sockaddr* addr, size_t size, int quiet)
 				"do_connect: could not connect to socket\n");
 			perror("connect");
 		}
+		close(fd);
 		return -errno;
 	}
 	return fd;
