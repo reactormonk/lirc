@@ -557,6 +557,7 @@ int main(int argc, char** argv)
 					}
 				}
 				if (y1 > (lirc_t) w1_h) {
+					y1 = 20;
 					x1 = 0;
 					drawGrid(div_);
 				}
