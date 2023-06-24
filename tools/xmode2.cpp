@@ -201,7 +201,7 @@ static void parse_options(int argc, char** const argv)
 			options_set_opt("xmode2:driver", optarg);
 			break;
 		case 'v':
-			printf("%s %s\n", progname, VERSION);
+			printf("xmode2 %s\n", VERSION);
 			exit(EXIT_SUCCESS);
 		case 'd':
 			options_set_opt("xmode2:device", optarg);
@@ -228,12 +228,12 @@ static void parse_options(int argc, char** const argv)
 			options_set_opt("lircd:driver-options", optarg);
 			break;
 		default:
-			printf("Usage: %s [options]\n", progname);
+			printf("Usage: xmode2 [options]\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 	if (optind < argc) {
-		fprintf(stderr, "%s: too many arguments\n", progname);
+		fprintf(stderr, "xmode2: too many arguments\n");
 		exit(EXIT_FAILURE);
 	}
 	options_set_opt("lircd:plugindir",
