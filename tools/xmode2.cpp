@@ -22,7 +22,7 @@
 * is much more exciting than the simple pulse&space output showed by
 * mode2.
 *
-* Usage: xmode2 [-t (ms/div)] , default division is 5 ms/div
+* Usage: xmode2 [-t (0.01 ms/div)] , default division is 0.05 ms/div
 *
 *
 * compile: gcc -o xmode2 xmode2.c -L/usr/X11R6/lib -lX11
@@ -131,7 +131,7 @@ static const char* const help =
 	"    -H --driver=driver\t\tUse given driver\n"
 	"    -U --plugindir=dir\t\tLoad drivers from given dir\n"
 	"    -g --geometry=geometry\twindow geometry\n"
-	"    -t --timediv=value\t\tms per unit\n"
+	"    -t --timediv=value\t\t0.01 ms per unit\n"
 	"    -m --mode\t\t\tEnable alternative display mode\n"
 	"    -k --keep-root\t\tKeep root privileges\n"
 	"    -r --raw\t\t\tAccess device directly\n"
