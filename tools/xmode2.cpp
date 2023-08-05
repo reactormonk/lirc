@@ -279,7 +279,7 @@ void initscreen(char* geometry)
 		puts("couldn't allocate blue color");
 	f1_str = XLoadQueryFont(d1, font1_name);
 	if (f1_str == NULL) {
-		puts("could't load font");
+		puts("couldn't load font");
 		exit(EXIT_FAILURE);
 	}
 
