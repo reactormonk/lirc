@@ -1745,7 +1745,7 @@ int analyse_remote(struct ir_remote* raw_data, const struct opts* opts)
 					free(new_codes);
 					return 0;
 				}
-				memset(&new_codes[new_codes_count / 2],
+				memset(&renew_codes[new_codes_count / 2],
 				       0,
 				       new_codes_count / 2 *
 				       sizeof(*new_codes));
