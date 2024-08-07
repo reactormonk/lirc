@@ -26,8 +26,8 @@
  * This file implements the main daemon lircd.
  */
 
+#include <config.h>
 #ifdef HAVE_CONFIG_H
-# include <config.h>
 #endif
 
 #include <grp.h>
@@ -318,7 +318,7 @@ int max(int a, int b)
 
 static int oatoi(const char* s)
 {
-	register int i;
+	int i;
 
 	if (*s == 0)
 		return -1;
@@ -1190,7 +1190,7 @@ static void schedule_repeat_timer (struct timespec* last)
 	struct timespec current;
 	struct timeval last_tv, gap_tv;
 
-	gap = send_buffer_sum() + repeat_remote->min_remaining_gap;
+	gap = repeat_remote->min_remaining_gap;
 	clock_gettime (CLOCK_MONOTONIC, &current);
 	secs = current.tv_sec - last->tv_sec;
 	diff = 1000000 * secs + (current.tv_nsec - last->tv_nsec) / 1000;

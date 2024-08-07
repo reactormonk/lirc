@@ -1819,7 +1819,7 @@ int lirc_code2char(struct lirc_config* config, char* code, char** string)
 	char* pos;
 
 	my_code = strdup(code);
-	pos = rindex(my_code, '\n');
+	pos = strrchr(my_code, '\n');
 	if (pos != NULL)
 		*pos = '\0';
 	ret = lirc_command_init(&cmd, "CODE %s\n", my_code);

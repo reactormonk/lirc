@@ -34,8 +34,12 @@ extern "C" {
 
 #define WBUF_SIZE 256
 
+typedef struct sbuf sbuf;  // Forward declaration
+
 /** Clear and re-initiate the buffer. */
-void send_buffer_init(void);
+struct sbuf* send_buffer_init();
+
+void clear_send_buffer(struct sbuf* );
 
 /**
  * Initializes the global send buffer for transmitting the code in
@@ -44,22 +48,24 @@ void send_buffer_init(void);
  * @param code ir_ncode to send.
  * @return 0 on failures, else 1.
  */
-int send_buffer_put(struct ir_remote* remote, struct ir_ncode* code);
+int send_buffer_put(struct sbuf*, struct ir_remote* remote, struct ir_ncode* code);
 
 /** @cond */
-int init_sim(struct ir_remote*	remote,
+int init_sim(
+         struct sbuf* send_buffer,
+         struct ir_remote*	remote,
 	     struct ir_ncode*	code,
 	     int		repeat_preset);
 /** @endcond */
 
 /** @return Number of items accessible in array send_buffer_data(). */
-int send_buffer_length(void);
+int send_buffer_length(struct sbuf*);
 
 /** @return Pointer to timing data in microseconds for pulses/spaces. */
-const lirc_t* send_buffer_data(void);
+const lirc_t* send_buffer_data(struct sbuf*);
 
 /** @return Total length of send buffer in microseconds. */
-lirc_t send_buffer_sum(void);
+lirc_t send_buffer_sum(struct sbuf*);
 
 /** @} */
 

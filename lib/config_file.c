@@ -1340,6 +1340,7 @@ void calculate_signal_lengths(struct ir_remote* remote)
 		int first = 1;
 		int repeat = 0;
 
+        struct sbuf* send_buffer = send_buffer_init();
 		do {
 			if (first) {
 				first = 0;
@@ -1348,8 +1349,9 @@ void calculate_signal_lengths(struct ir_remote* remote)
 				next = next->next;
 			}
 			for (repeat = 0; repeat < 2; repeat++) {
-				if (init_sim(remote, &code, repeat)) {
-					lirc_t sum = send_buffer_sum();
+                clear_send_buffer(send_buffer);
+				if (init_sim(send_buffer, remote, &code, repeat)) {
+					lirc_t sum = send_buffer_sum(send_buffer);
 
 					if (sum) {
 						if (first_sum || sum < min_signal_length)
@@ -1358,19 +1360,20 @@ void calculate_signal_lengths(struct ir_remote* remote)
 							max_signal_length = sum;
 						first_sum = 0;
 					}
-					for (i = 0; i < send_buffer_length(); i++) {
+					for (i = 0; i < send_buffer_length(send_buffer); i++) {
 						if (i & 1) {    /* space */
-							if (send_buffer_data()[i] > max_space)
-								max_space = send_buffer_data()[i];
+							if (send_buffer_data(send_buffer)[i] > max_space)
+								max_space = send_buffer_data(send_buffer)[i];
 						} else {        /* pulse */
-							if (send_buffer_data()[i] > max_pulse)
-								max_pulse = send_buffer_data()[i];
+							if (send_buffer_data(send_buffer)[i] > max_pulse)
+								max_pulse = send_buffer_data(send_buffer)[i];
 						}
 					}
 				}
 			}
 		} while (next);
 		c++;
+        free(send_buffer);
 	}
 	if (first_sum) {
 		/* no timing data, so assume gap is the actual total
