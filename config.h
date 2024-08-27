@@ -9,7 +9,7 @@
 #define GETGROUPS_T gid_t
 
 /* Define to 1 if 'TIOCGWINSZ' requires <sys/ioctl.h>. */
-/* #undef GWINSZ_IN_SYS_IOCTL */
+#define GWINSZ_IN_SYS_IOCTL 1
 
 /* Define to 1 if you have the <alsa/asoundlib.h> header file. */
 /* #undef HAVE_ALSA_ASOUNDLIB_H */
@@ -162,7 +162,7 @@
 #define HAVE_SYSLOG_H 1
 
 /* defined if systemd API is available */
-#define HAVE_SYSTEMD 1
+/* #define HAVE_SYSTEMD 1 */
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #define HAVE_SYS_IOCTL_H 1
